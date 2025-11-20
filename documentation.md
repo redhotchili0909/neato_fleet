@@ -3,99 +3,6 @@
 ## Running Simulator
 
 ### Step 1:
-Create a new file: `ros2_ws/src/neato_packages/neato2_gazebo/launch/multi_neato_world.py`
-
-With contents:
-```
-#!/usr/bin/env python3
-import os
-from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
-
-def generate_launch_description():
-
-    pkg = get_package_share_directory('neato2_gazebo')
-    gazebo_pkg = get_package_share_directory('gazebo_ros')
-
-    world_path = os.path.join(pkg, 'worlds', 'test.world')
-
-    sdf_path = os.path.join(
-        pkg,
-        'models',
-        'neato',
-        'neato_with_camera.sdf'
-    )
-
-    num_robots = 3   # change to however many you want
-
-    spawn_nodes = []
-    for i in range(num_robots):
-        name = f"robot{i+1}"
-
-        # Spawn Neato
-        spawn_nodes.append(
-            Node(
-                package='gazebo_ros',
-                executable='spawn_entity.py',
-                arguments=[
-                    '-entity', name,
-                    '-robot_namespace', f'/{name}',
-                    '-file', sdf_path,
-                    '-x', str(i * 1.5),
-                    '-y', '0',
-                    '-z', '0.05',
-                ],
-                output='screen'
-            )
-        )
-
-        # Simulator adapter (adds TF, stable_scan, accel, bump)
-        spawn_nodes.append(
-            Node(
-                package='neato_node2',
-                executable='simulator_adapter',
-                namespace=name,
-                parameters=[{'tf_prefix': name}],
-                output='screen'
-            )
-        )
-
-        # Optional: scan_to_pc2 fix node
-        spawn_nodes.append(
-            Node(
-                package='fix_scan',
-                executable='scan_to_pc2',
-                namespace=name,
-                output='screen'
-            )
-        )
-
-    return LaunchDescription([
-
-        # Gazebo server
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(gazebo_pkg, 'launch', 'gzserver.launch.py')
-            ),
-            launch_arguments={'world': world_path}.items()
-        ),
-
-        # Gazebo client
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(gazebo_pkg, 'launch', 'gzclient.launch.py')
-            )
-        ),
-
-        # Spawn robots + nodes
-        *spawn_nodes,
-    ])
-```
-
-### Step 2:
 Change the file `ros2_ws/src/neato_packages/neato_node2/neato_node2/simulator_adapter.py` 
 
 With these contents:
@@ -252,7 +159,15 @@ if __name__ == '__main__':
     main()
 ```
 
+### Step 2:
+REMEMBER: Build and Source ROS2 Enviroment
+
+Run Gazebo with: 
+`ros2 launch neato_fleet multi_neato_world.py`
+
 ## Important Commands
+
+
 
 ### Connecting to multiple neatos (IRL):
 
