@@ -47,14 +47,14 @@ class RVOFleetController(Node):
         super().__init__('rvo_fleet_controller')
 
         # Declare parameters
-        self.declare_parameter('num_robots', 3)
+        self.declare_parameter('num_robots', 4)
         self.declare_parameter('max_speed', 0.5)  # m/s
         self.declare_parameter('max_angular_speed', 1.5)  # rad/s
-        self.declare_parameter('neighbor_dist', 2.0)  # how far in meters to look for other agents
-        self.declare_parameter('max_neighbors', 10)   # max number of other agents to consider
-        self.declare_parameter('time_horizon', 2.0)  # how far ahead in seconds to plan for other agents
+        self.declare_parameter('neighbor_dist', 10.0)  # how far in meters to look for other agents
+        self.declare_parameter('max_neighbors', 4)   # max number of other agents to consider
+        self.declare_parameter('time_horizon', 30.0)  # how far ahead in seconds to plan for other agents
         self.declare_parameter('time_horizon_obst', 2.0)  # how far ahead in seconds to plan for obstacles
-        self.declare_parameter('robot_radius', 0.2)  # physical radius of robot in meters
+        self.declare_parameter('robot_radius', 0.6)  # physical radius of robot in meters
         self.declare_parameter('goal_tolerance', 0.1)  # how close to the goal the agent is
         self.declare_parameter('control_rate', 10.0)  # hz
 

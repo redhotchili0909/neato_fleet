@@ -32,14 +32,26 @@ def generate_launch_description():
         'neato',
         'neato_blue.sdf'
     )
-    
-    models = [sdf_path_blue, sdf_path_red, sdf_path_green]
+    models = [sdf_path_blue, sdf_path_blue, sdf_path_red, sdf_path_red]
 
-    num_robots = 3   # change to however many you want
+    num_robots = 4   # change to however many you want
 
     spawn_nodes = []
+
+    # Desired starting positions
+    start_positions = [
+        (-2, 0),   # robot1
+        ( 2, 0),   # robot2
+        ( 0,-2),   # robot3
+        ( 0, 2)    # robot4
+    ]
+    angles = [str(0), str(math.pi), str(math.pi/2), str(math.pi * 3/2)]
+
     for i in range(num_robots):
         name = f"robot{i+1}"
+
+        # Select the position (safe even if num_robots < 4)
+        x, y = start_positions[i]
 
         # Spawn Neato
         spawn_nodes.append(
@@ -50,16 +62,16 @@ def generate_launch_description():
                     '-entity', name,
                     '-robot_namespace', f'/{name}',
                     '-file', models[i],
-                    '-x', str(i * 2),
-                    '-y', '0',
+                    '-x', str(x),
+                    '-y', str(y),
                     '-z', '0.05',
-                    '-Y', str(math.pi / 2)
+                    '-Y', angles[i]
                 ],
                 output='screen'
             )
         )
 
-        # Simulator adapter (adds TF, stable_scan, accel, bump)
+        # Simulator adapter
         spawn_nodes.append(
             Node(
                 package='neato_node2',
@@ -70,7 +82,7 @@ def generate_launch_description():
             )
         )
 
-        # Optional: scan_to_pc2 fix node
+        # scan_to_pc2 fix node
         spawn_nodes.append(
             Node(
                 package='fix_scan',

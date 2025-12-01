@@ -12,7 +12,7 @@ class FleetGoalPublisher(Node):
     def __init__(self):
         super().__init__('fleet_goal_publisher')
         
-        self.declare_parameter('num_robots', 3)
+        self.declare_parameter('num_robots', 4)
         self.declare_parameter('scenario', 'swap')  # swap,cross,home
         
         self.num_robots = self.get_parameter('num_robots').value
@@ -33,6 +33,10 @@ class FleetGoalPublisher(Node):
             return self.cross_scenario()
         elif self.scenario == 'home':
             return self.home_scenario()
+        elif self.scenario == 'plus':
+            return self.plus_scenario()
+        elif self.scenario == 'rplus':
+            return self.reverse_plus_scenario()
         else:
             self.get_logger().warn(f'Unknown scenario: {self.scenario}, using swap')
             return self.swap_scenario()
@@ -47,11 +51,11 @@ class FleetGoalPublisher(Node):
     
     def cross_scenario(self):
         """Robots in a cross pattern swapping through center"""
+
         if self.num_robots == 3:
             return [(4.0, 2.0), (0.0, 2.0), (2.0, 2.0)]
         else:
             return self.swap_scenario()
-
 
     def home_scenario(self) -> List[Tuple[float, float]]:
         """Return all robots to their original starting positions"""
@@ -60,6 +64,13 @@ class FleetGoalPublisher(Node):
         for i in range(self.num_robots):
             goals.append((i * 2.0, 0.0))
         return goals
+    
+    def plus_scenario(self):
+        """Create a plus sign and swap positions"""
+        # robots start at (-2,0) (2,0), (0,-2), (0,2)
+        return [(2.0, 0.0), (-2.0, 0.0), (0.0, 2.0), (0.0, -2.0)]
+    def reverse_plus_scenario(self):
+        return [(-2.0, 0.0), (2.0, 0.0), (0.0, -2.0), (0.0, 2.0)]
 
     def publish_goals(self):
         """Publish goal markers for visualization and fleet controller"""
