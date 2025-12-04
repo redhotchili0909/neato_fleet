@@ -50,13 +50,15 @@ class RVOFleetController(Node):
         self.declare_parameter('num_robots', 3)
         self.declare_parameter('max_speed', 0.5)  # m/s
         self.declare_parameter('max_angular_speed', 1.5)  # rad/s
-        self.declare_parameter('neighbor_dist', 2.0)  # how far in meters to look for other agents
+        self.declare_parameter('neighbor_dist', 10.0)  # how far in meters to look for other agents
         self.declare_parameter('max_neighbors', 10)   # max number of other agents to consider
-        self.declare_parameter('time_horizon', 2.0)  # how far ahead in seconds to plan for other agents
+        self.declare_parameter('time_horizon', 5.0)  # how far ahead in seconds to plan for other agents
         self.declare_parameter('time_horizon_obst', 2.0)  # how far ahead in seconds to plan for obstacles
         self.declare_parameter('robot_radius', 0.2)  # physical radius of robot in meters
         self.declare_parameter('goal_tolerance', 0.1)  # how close to the goal the agent is
         self.declare_parameter('control_rate', 10.0)  # hz
+        # Start positions: flat list [x1,y1, x2,y2, x3,y3] - default (0,0), (2,0), (4,0)
+        self.declare_parameter('start_positions', [0.0, 0.0, 2.0, 0.0, 4.0, 0.0])
 
         # Get parameters
         self.num_robots = self.get_parameter('num_robots').value
@@ -69,6 +71,20 @@ class RVOFleetController(Node):
         self.robot_radius = self.get_parameter('robot_radius').value
         self.goal_tolerance = self.get_parameter('goal_tolerance').value
         self.control_rate = self.get_parameter('control_rate').value
+        
+        # Parse start positions - if empty, use default spacing
+        start_pos_flat = self.get_parameter('start_positions').value
+        self.start_positions = []
+        if start_pos_flat and len(start_pos_flat) >= 2:
+            # Parse flat list [x1,y1, x2,y2, ...] into tuples
+            for i in range(0, len(start_pos_flat), 2):
+                if i + 1 < len(start_pos_flat):
+                    self.start_positions.append((start_pos_flat[i], start_pos_flat[i + 1]))
+        
+        # If not enough positions provided, use defaults
+        while len(self.start_positions) < self.num_robots:
+            idx = len(self.start_positions)
+            self.start_positions.append((idx * 2.0, 0.0))  # Default: (0,0), (2,0), (4,0), ...
 
         # initialize RVO2 simulator
         self.sim = rvo2.PyRVOSimulator(
@@ -88,16 +104,18 @@ class RVOFleetController(Node):
 
         # initialize robots
         for i in range(self.num_robots):
+            start_pos = self.start_positions[i]
             # add agent to RVO sim
-            agent_id = self.sim.addAgent((i*2.0, 0.0))  # match with multi_neato_world.py spawn positions
+            agent_id = self.sim.addAgent(start_pos)
             self.agent_ids.append(agent_id)
             
             # initialize robot state with no set goal destination  + will wait for fleet commands
             state = RobotState(
-                position=(i*2.0, 0.0), # match with multi_neato_world.py spawn positions
-                goal=(i*2.0, 0.0)  # start position (no moving yet)
+                position=start_pos,
+                goal=start_pos  # start position (no moving yet)
             )
             self.robot_states.append(state)
+            self.get_logger().info(f'Robot {i+1} start position: ({start_pos[0]:.2f}, {start_pos[1]:.2f})')
 
         self.odom_subs = []
         self.vel_pubs = []
@@ -187,7 +205,11 @@ class RVOFleetController(Node):
         
         # check if we have odom for all robots
         if not all(state.has_odom for state in self.robot_states):
-            self.get_logger().warn('Waiting for odometry from all robots...', throttle_duration_sec=2.0)
+            status = ', '.join([
+                f'robot{i+1}: {"yes" if state.has_odom else "no"}'
+                for i, state in enumerate(self.robot_states)
+            ])
+            self.get_logger().warn(f'Waiting for odometry... [{status}]', throttle_duration_sec=2.0)
             return
 
         # update RVO simulator with current positions and preferred velocities
@@ -250,15 +272,15 @@ class RVOFleetController(Node):
             else:
                 # move forward and correct heading
                 speed = math.sqrt(vx_global**2 + vy_global**2)
-                cmd.linear.x = min(speed, self.max_speed)
+                cmd.linear.x = speed
                 cmd.angular.z = 2.0 * yaw_error  # proportional error correction (if too reactive, adjust)
         else:
             cmd.linear.x = 0.0
             cmd.angular.z = 0.0
         
-        # set Twist limits
-        cmd.linear.x = max(min(cmd.linear.x, self.max_speed), -self.max_speed)
-        cmd.angular.z = max(min(cmd.angular.z, self.max_angular_speed), -self.max_angular_speed)
+        # # set Twist limits
+        # cmd.linear.x = max(min(cmd.linear.x, self.max_speed), -self.max_speed)
+        # cmd.angular.z = max(min(cmd.angular.z, self.max_angular_speed), -self.max_angular_speed)
         
         return cmd
 
