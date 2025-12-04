@@ -25,7 +25,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'simple_move = neato_fleet.move_neatos:main',
+            'simple_move = neato_fleet.simple_move_neatos:main',
+            'move = neato_fleet.move_neatos:main'
         ],
     },
 )
