@@ -33,6 +33,8 @@ class FleetGoalPublisher(Node):
             return self.cross_scenario()
         elif self.scenario == 'home':
             return self.home_scenario()
+        elif self.scenario == 'straight':
+            return self.straight_scenario()
         else:
             self.get_logger().warn(f'Unknown scenario: {self.scenario}, using swap')
             return self.swap_scenario()
@@ -52,6 +54,9 @@ class FleetGoalPublisher(Node):
         else:
             return self.swap_scenario()
 
+    def straight_scenario(self):
+        return [(0.0, 1.0), (0.9144, 1.0), (1.8288, 1.0)]
+    
 
     def home_scenario(self) -> List[Tuple[float, float]]:
         """Return all robots to their original starting positions"""

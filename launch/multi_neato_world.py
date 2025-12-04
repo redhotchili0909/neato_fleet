@@ -50,7 +50,7 @@ def generate_launch_description():
                     '-entity', name,
                     '-robot_namespace', f'/{name}',
                     '-file', models[i],
-                    '-x', str(i * 2),
+                    '-x', str(i * 0.9144),
                     '-y', '0',
                     '-z', '0.05',
                     '-Y', str(math.pi / 2)
