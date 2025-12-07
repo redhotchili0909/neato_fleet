@@ -92,7 +92,14 @@ class CmdPlayer(Node):
                 
                 self.frames.append(CommandFrame(timestamp=timestamp, commands=commands))
         
-        self.get_logger().info(f'Loaded trajectory')
+        if self.frames:
+            duration = self.frames[-1].timestamp - self.frames[0].timestamp
+            self.get_logger().info(
+                f'Loaded {len(self.frames)} frames, duration={duration:.2f}s, '
+                f'first_t={self.frames[0].timestamp:.3f}s'
+            )
+        else:
+            self.get_logger().error('No frames loaded from trajectory!')
 
 
     def start_playback(self):
@@ -109,18 +116,28 @@ class CmdPlayer(Node):
             return
         
         current_time = self.get_clock().now().nanoseconds / 1e9
-        elapsed = (current_time - self.start_time)
+        elapsed = current_time - self.start_time
         
+        # find the frame that matches current elapsed time
         while (self.current_frame < len(self.frames) - 1 and 
                self.frames[self.current_frame + 1].timestamp <= elapsed):
             self.current_frame += 1
         
-        # check if we're done
-        if self.current_frame >= len(self.frames):
-            if not self.finished:
+        # check if we've finished all frames
+        if self.current_frame >= len(self.frames) - 1:
+            # Play the last frame, then finish
+            frame = self.frames[-1]
+            for i in range(self.num_robots):
+                cmd = Twist()
+                cmd.linear.x = frame.commands[i][0]
+                cmd.angular.z = frame.commands[i][1]
+                self.vel_pubs[i].publish(cmd)
+            
+            if elapsed > self.frames[-1].timestamp + 0.5:  # wait 0.5s after last frame
                 self.finish_playback()
             return
         
+        # get current frame and publish commands
         frame = self.frames[self.current_frame]
         
         for i in range(self.num_robots):
@@ -128,6 +145,11 @@ class CmdPlayer(Node):
             cmd.linear.x = frame.commands[i][0]
             cmd.angular.z = frame.commands[i][1]
             self.vel_pubs[i].publish(cmd)
+            
+        # log progress occasionally
+        if elapsed - self.last_log_time > 2.0:
+            self.get_logger().info(f'Playing frame {self.current_frame}/{len(self.frames)} at t={elapsed:.2f}s')
+            self.last_log_time = elapsed
         
 
     def finish_playback(self):
