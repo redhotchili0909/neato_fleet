@@ -25,11 +25,12 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'move = neato_fleet.move_neatos:main'
             'simple_move = neato_fleet.move_neatos:main',
             'rvo_fleet_controller = neato_fleet.rvo_fleet_controller:main',
             'fleet_goals = neato_fleet.fleet_goals:main',
             'trajectory_recorder = neato_fleet.trajectory_recorder:main',
+            'cmd_recorder = neato_fleet.cmd_recorder:main',
+            'cmd_player = neato_fleet.cmd_player:main',
         ],
     },
 )
