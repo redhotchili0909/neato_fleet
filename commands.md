@@ -117,3 +117,7 @@ ros2 run neato_fleet rvo_fleet_controller --ros-args \
 # Terminal 5: Send goals
 ros2 run neato_fleet fleet_goals --ros-args -p scenario:=swap -p num_robots:=3
 ```
+
+```
+ros2 run neato_fleet rvo_fleet_controller --ros-args     -p num_robots:=3     -p start_positions:="[0.0,0.0, 0.9144,0.0, 1.8288,0.0]"     -p start_yaws:="[1.5708, 1.5708, 1.5708]"
+```
