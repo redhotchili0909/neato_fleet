@@ -96,6 +96,14 @@ ros2 run neato_fleet rvo_fleet_controller
 ros2 run neato_fleet fleet_goals --ros-args -p scenario:=swap
 ```
 
+```
+ros2 run neato_fleet cmd_recorder --ros-args -p num_robots:=3
+```
+
+``` 
+ros2 run neato_fleet cmd_player --ros-args   -p num_robots:=3   -p trajectory_file:=cmd_trajectory_20251207_164558.csv
+```
+
 ## Quick Start (Real Hardware)
 
 ```bash
