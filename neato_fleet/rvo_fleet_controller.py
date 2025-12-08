@@ -20,10 +20,10 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist, Point
 from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import ColorRGBA
+from std_msgs.msg import ColorRGBA, String
 import rvo2
 import math
-import numpy as np
+import json
 from typing import List, Tuple, Optional
 from dataclasses import dataclass
 
@@ -31,16 +31,11 @@ from dataclasses import dataclass
 @dataclass
 class RobotState:
     """Holds the state of a single robot"""
-    position: Tuple[float, float] = (0.0, 0.0)  # Global position (after offset correction)
+    position: Tuple[float, float] = (0.0, 0.0)
     velocity: Tuple[float, float] = (0.0, 0.0)
     yaw: float = 0.0
     goal: Tuple[float, float] = (0.0, 0.0)
     has_odom: bool = False
-    # For offset correction: first odom reading becomes the reference
-    odom_offset: Optional[Tuple[float, float]] = None  # (odom_x, odom_y) at startup
-    yaw_offset: Optional[float] = None  # yaw at startup
-    start_position: Tuple[float, float] = (0.0, 0.0)   # Where we placed the robot
-    start_yaw: float = 0.0  # Initial heading (0 = facing +X)
 
 
 class RVOFleetController(Node):
@@ -53,19 +48,17 @@ class RVOFleetController(Node):
 
         # Declare parameters
         self.declare_parameter('num_robots', 3)
-        self.declare_parameter('max_speed', 0.1)  # m/s
+        self.declare_parameter('max_speed', 0.2)  # m/s
         self.declare_parameter('max_angular_speed', 1.5)  # rad/s
         self.declare_parameter('neighbor_dist', 10.0)  # how far in meters to look for other agents
         self.declare_parameter('max_neighbors', 10)   # max number of other agents to consider
         self.declare_parameter('time_horizon', 5.0)  # how far ahead in seconds to plan for other agents
         self.declare_parameter('time_horizon_obst', 2.0)  # how far ahead in seconds to plan for obstacles
-        self.declare_parameter('robot_radius', 0.3)  # physical radius of robot in meters
+        self.declare_parameter('robot_radius', 0.33)  # physical radius of robot in meters
         self.declare_parameter('goal_tolerance', 0.1)  # how close to the goal the agent is
         self.declare_parameter('control_rate', 10.0)  # hz
-        # Start positions: flat list [x1,y1, x2,y2, x3,y3] - default (0,0), (2,0), (4,0)
-        self.declare_parameter('start_positions', [0.0, 0.0, 2.0, 0.0, 4.0, 0.0])
-        # Start yaws: [yaw1, yaw2, yaw3] in radians (0 = facing +X, pi/2 = facing +Y)
-        self.declare_parameter('start_yaws', [0.0, 0.0, 0.0])
+        # Start positions: flat list [x1,y1, x2,y2, x3,y3] - default (0,0), (0.9114,0), (1.8228,0)
+        self.declare_parameter('start_positions', [0.0, 0.0, 0.9114, 0.0, 1.8228, 0.0])
 
         # Get parameters
         self.num_robots = self.get_parameter('num_robots').value
@@ -83,19 +76,15 @@ class RVOFleetController(Node):
         start_pos_flat = self.get_parameter('start_positions').value
         self.start_positions = []
         if start_pos_flat and len(start_pos_flat) >= 2:
-            # parse flat list [x1,y1, x2,y2, ...] into tuples
+            # Parse flat list [x1,y1, x2,y2, ...] into tuples
             for i in range(0, len(start_pos_flat), 2):
                 if i + 1 < len(start_pos_flat):
                     self.start_positions.append((start_pos_flat[i], start_pos_flat[i + 1]))
-
-        # Parse start yaws - if empty, default to 0 (facing +X)
-        start_yaws_flat = self.get_parameter('start_yaws').value
-        self.start_yaws = []
-        if start_yaws_flat and len(start_yaws_flat) >= 1:
-            # parse flat list [yaw1, yaw2, ...] into list   
-            for i in range(0, len(start_yaws_flat)):
-                if i < len(start_yaws_flat):
-                    self.start_yaws.append(start_yaws_flat[i])
+        
+        # If not enough positions provided, use defaults
+        while len(self.start_positions) < self.num_robots:
+            idx = len(self.start_positions)
+            self.start_positions.append((idx * 2.0, 0.0))  # Default: (0,0), (2,0), (4,0), ...
 
         # initialize RVO2 simulator
         self.sim = rvo2.PyRVOSimulator(
@@ -116,7 +105,6 @@ class RVOFleetController(Node):
         # initialize robots
         for i in range(self.num_robots):
             start_pos = self.start_positions[i]
-            start_yaw = self.start_yaws[i]
             # add agent to RVO sim
             agent_id = self.sim.addAgent(start_pos)
             self.agent_ids.append(agent_id)
@@ -124,16 +112,10 @@ class RVOFleetController(Node):
             # initialize robot state with no set goal destination  + will wait for fleet commands
             state = RobotState(
                 position=start_pos,
-                goal=start_pos,  # start position
-                start_position=start_pos,
-                start_yaw=start_yaw,
-                odom_offset=None,
-                yaw_offset=None
+                goal=start_pos  # start position (no moving yet)
             )
             self.robot_states.append(state)
-            self.get_logger().info(
-                f'Robot {i+1} start: pos=({start_pos[0]:.2f}, {start_pos[1]:.2f}), yaw={math.degrees(start_yaw):.1f}°'
-            )
+            self.get_logger().info(f'Robot {i+1} start position: ({start_pos[0]:.2f}, {start_pos[1]:.2f})')
 
         self.odom_subs = []
         self.vel_pubs = []
@@ -165,43 +147,63 @@ class RVOFleetController(Node):
             1.0 / self.control_rate,
             self.control_loop
         )
+        
+        # debug publisher for cmd_recorder integration
+        self.debug_pub = self.create_publisher(String, '/rvo_debug', 10)
+        self.debug_timer = self.create_timer(0.5, self.publish_debug_state)
 
         self.get_logger().info(
             f'RVO Fleet Controller initialized with {self.num_robots} robots'
         )
 
+    def publish_debug_state(self):
+        """Publish internal state for cmd_recorder to know when goals are received"""
+        debug_data = {
+            'goals_received': self.goals_received,
+            'robots': []
+        }
+        for i, state in enumerate(self.robot_states):
+            robot_data = {
+                'id': i + 1,
+                'has_odom': state.has_odom,
+                'position': list(state.position),
+                'yaw_deg': math.degrees(state.yaw),
+                'goal': list(state.goal),
+            }
+            debug_data['robots'].append(robot_data)
+        
+        msg = String()
+        msg.data = json.dumps(debug_data)
+        self.debug_pub.publish(msg)
 
     def odom_callback(self, msg, robot_idx):
         """Update robot state from odometry message"""
         state = self.robot_states[robot_idx]
         
-        odom_x = msg.pose.pose.position.x
-        odom_y = msg.pose.pose.position.y
-        
-        q = msg.pose.pose.orientation
-        siny_cosp = 2.0*(q.w*q.z+q.x*q.y)
-        cosy_cosp = 1.0-2.0*(q.y*q.y+q.z*q.z)
-        odom_yaw = math.atan2(siny_cosp, cosy_cosp)
-        
-        if state.odom_offset is None:
-            state.odom_offset = (odom_x, odom_y)
-            state.yaw_offset = odom_yaw
-        
-        # calculate global odom
+        # extract position
         state.position = (
-            state.start_position[0] + (odom_x - state.odom_offset[0]),
-            state.start_position[1] + (odom_y - state.odom_offset[1])
+            msg.pose.pose.position.x,
+            msg.pose.pose.position.y
         )
         
-        state.yaw = self.normalize_angle(
-            state.start_yaw + (odom_yaw - state.yaw_offset)
-        )
-        
-        # Extract velocity
+        # extract velocity
         state.velocity = (
             msg.twist.twist.linear.x,
             msg.twist.twist.linear.y
         )
+        
+        # extract yaw (we only need yaw for 2d space)
+        q = msg.pose.pose.orientation
+        siny_cosp = 2.0*(q.w*q.z+q.x*q.y)
+        cosy_cosp = 1.0-2.0*(q.y*q.y+q.z*q.z)
+        state.yaw = math.atan2(siny_cosp, cosy_cosp)
+        
+        # On first odom, set goal to current position (stay in place until goals received)
+        if not state.has_odom:
+            state.goal = state.position
+            self.get_logger().info(
+                f'Robot {robot_idx+1} odom received at ({state.position[0]:.2f}, {state.position[1]:.2f})'
+            )
         
         state.has_odom = True
 
