@@ -41,10 +41,13 @@ def generate_launch_description():
     )
     
     multi_neato_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg, 'launch', 'multi_neato_world.py')
+            PythonLaunchDescriptionSource(
+                os.path.join(pkg, 'launch', 'multi_neato_world.py')
+            ),
+            launch_arguments={
+                'config_file': config_file
+            }.items()
         )
-    )
     
     # RVO fleet controller node
     rvo_controller = Node(
