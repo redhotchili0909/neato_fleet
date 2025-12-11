@@ -20,10 +20,12 @@ def launch_setup(context, *args, **kwargs):
             params = yaml.safe_load(f)
             # Navigate to /rvo_fleet_controller -> ros__parameters -> start_positions
             start_positions = params['/rvo_fleet_controller']['ros__parameters']['start_positions']
+            obstacle_positions = params['/rvo_fleet_controller']['ros__parameters']['obstacle_positions']
     except Exception as e:
         print(f"Error reading config file: {e}")
         # Fallback default if yaml fails
         start_positions = [0.0, 0.0, 0.9144, 0.0, 1.8288, 0.0]
+        obstacle_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     # 3. Setup Models and Paths
     pkg = get_package_share_directory('neato_fleet')
@@ -89,7 +91,28 @@ def launch_setup(context, *args, **kwargs):
                 output='screen'
             )
         )
-
+        
+    num_obstacles = 3
+    obstacle_model_file = os.path.join(pkg, 'models', 'obstacles', 'cube.sdf')
+    for i in range(num_obstacles):
+            pos_x = obstacle_positions[i * 2]
+            pos_y = obstacle_positions[i * 2 + 1]
+            spawn_nodes.append(
+            Node(
+                package='gazebo_ros',
+                executable='spawn_entity.py',
+                arguments=[
+                    '-entity', f'obstacle{i}',
+                    '-file', obstacle_model_file,
+                    '-x', str(pos_x),
+                    '-y', str(pos_y),
+                    '-z', '0.05',
+                    '-Y', str(math.pi / 2) # Facing North
+                ],
+                output='screen'
+            )
+        )
+            
     return spawn_nodes
 
 def generate_launch_description():

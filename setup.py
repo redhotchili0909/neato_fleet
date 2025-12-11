@@ -16,6 +16,7 @@ setup(
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         (os.path.join('share', package_name, 'models/neato'), glob('models/neato/*.sdf')),
         (os.path.join('share', package_name, 'models/worlds'), glob('models/worlds/*.world')),
+        (os.path.join('share', package_name, 'models/obstacles'), glob('models/obstacles/*.sdf')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
