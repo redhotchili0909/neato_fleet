@@ -64,6 +64,15 @@ def generate_launch_description():
         parameters=[config_file]
     )
     
+    recorder = Node(
+        package='neato_fleet',
+        executable='cmd_recorder',
+        name='cmd_vel_recorder',
+        output='screen',
+        parameters=[{'num_robots': 3}]
+        
+    )
+    
     return LaunchDescription([
         num_robots_arg,
         scenario_arg,
