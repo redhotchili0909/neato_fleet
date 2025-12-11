@@ -20,6 +20,8 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     pkg = get_package_share_directory('neato_fleet')
     
+    config_file = os.path.join(pkg, 'config', 'fleet_config.yaml')
+    
     # launch arguments
     num_robots_arg = DeclareLaunchArgument(
         'num_robots',
@@ -50,15 +52,7 @@ def generate_launch_description():
         executable='rvo_fleet_controller',
         name='rvo_fleet_controller',
         output='screen',
-        parameters=[{
-            'num_robots': LaunchConfiguration('num_robots'),
-            'max_speed': LaunchConfiguration('max_speed'),
-            'neighbor_dist': 2.0,
-            'time_horizon': 2.0,
-            'robot_radius': 0.2,
-            'goal_tolerance': 0.15,
-            'control_rate': 10.0,
-        }]
+        parameters=[config_file]
     )
     
     # fleet goals node
@@ -67,10 +61,7 @@ def generate_launch_description():
         executable='fleet_goals',
         name='fleet_goals',
         output='screen',
-        parameters=[{
-            'num_robots': LaunchConfiguration('num_robots'),
-            'scenario': LaunchConfiguration('scenario'),
-        }]
+        parameters=[config_file]
     )
     
     return LaunchDescription([

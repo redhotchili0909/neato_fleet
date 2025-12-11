@@ -58,7 +58,8 @@ class RVOFleetController(Node):
         self.declare_parameter('goal_tolerance', 0.1)  # how close to the goal the agent is
         self.declare_parameter('control_rate', 10.0)  # hz
         # Start positions: flat list [x1,y1, x2,y2, x3,y3] - default (0,0), (0.9114,0), (1.8228,0)
-        self.declare_parameter('start_positions', [0.0, 0.0, 0.9114, 0.0, 1.8228, 0.0])
+        # self.declare_parameter('start_positions', [0.0, 0.0, 0.9114, 0.0, 1.8228, 0.0])
+        self.declare_parameter('start_positions', [0.0])
 
         # Get parameters
         self.num_robots = self.get_parameter('num_robots').value

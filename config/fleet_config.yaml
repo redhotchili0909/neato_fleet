@@ -1,0 +1,27 @@
+/rvo_fleet_controller:
+  ros__parameters:
+
+    num_robots: 3
+    control_rate: 10.0 # Hz
+    max_speed: 0.2 # m/s
+    max_angular_speed: 1.5 # rad/s
+    robot_radius: 0.33 # meters
+    goal_tolerance: 0.1 # meters
+    
+    neighbor_dist: 10.0
+    max_neighbors: 10
+    time_horizon: 5.0
+    time_horizon_obst: 2.0
+
+    start_positions: [0.0, 0.0, 0.9144, 0.0, 1.8288, 0.0]
+
+/fleet_goals:
+  ros__parameters:
+    num_robots: 3
+    
+    scenario: "cross" 
+
+    goals_swap: [1.8288, 0.0, 0.9144, 0.0, 0.0, 0.0]
+    goals_straight: [0.0, 1.0, 0.9144, 1.0, 1.8288, 1.0]
+    goals_cross: [1.8288, 1.0, 0.9144, 2.0, 0.0, 1.0]
+    goals_home: [0.0, 0.0, 0.9144, 0.0, 1.8288, 0.0]
