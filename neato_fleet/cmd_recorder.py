@@ -39,9 +39,11 @@ class CmdRecorder(Node):
         
         self.num_robots = self.get_parameter('num_robots').value
         
-        self.output_dir = os.path.expanduser(
-            '~/ros2_ws/src/comp-robo/neato_fleet/trajectories'
-        )
+        # self.output_dir = os.path.expanduser(
+        #     '~/ros2_ws/src/comp-robo/neato_fleet/trajectories'
+        # )
+        
+        self.output_dir = os.getcwd()
 
         os.makedirs(self.output_dir, exist_ok=True)
         
@@ -49,7 +51,7 @@ class CmdRecorder(Node):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         output_file = f'cmd_trajectory_{timestamp}.csv'
         
-        self.output_path = os.path.join(self.output_dir, output_file)
+        self.output_path = os.path.join(self.output_dir, 'trajectories', output_file)
         
         self.recording = False
         self.start_time = None
