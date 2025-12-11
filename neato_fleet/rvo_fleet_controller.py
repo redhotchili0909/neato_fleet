@@ -60,6 +60,7 @@ class RVOFleetController(Node):
         # Start positions: flat list [x1,y1, x2,y2, x3,y3] - default (0,0), (0.9114,0), (1.8228,0)
         # self.declare_parameter('start_positions', [0.0, 0.0, 0.9114, 0.0, 1.8228, 0.0])
         self.declare_parameter('start_positions', [0.0])
+        self.declare_parameter('obstacle_positions', [0.0])
 
         # Get parameters
         self.num_robots = self.get_parameter('num_robots').value
@@ -81,11 +82,33 @@ class RVOFleetController(Node):
             for i in range(0, len(start_pos_flat), 2):
                 if i + 1 < len(start_pos_flat):
                     self.start_positions.append((start_pos_flat[i], start_pos_flat[i + 1]))
-        
+
         # If not enough positions provided, use defaults
         while len(self.start_positions) < self.num_robots:
             idx = len(self.start_positions)
             self.start_positions.append((idx * 2.0, 0.0))  # Default: (0,0), (2,0), (4,0), ...
+                    
+        obstacle_pos_flat = self.get_parameter('obstacle_positions').value
+        self.obstacle_positions = []
+        
+        obst_size = 0.3048
+        half_size = obst_size / 2.0
+        
+        if obstacle_pos_flat and len(obstacle_pos_flat) >= 2:
+            for i in range(0, len(obstacle_pos_flat), 2):
+                if i + 1 < len(obstacle_pos_flat):
+                    cx = obstacle_pos_flat[i]
+                    cy = obstacle_pos_flat[i + 1]
+                    
+                    corners = [
+                        (cx + half_size, cy + half_size),
+                        (cx - half_size, cy + half_size),
+                        (cx - half_size, cy - half_size),
+                        (cx + half_size, cy - half_size)
+                    ]
+                    
+                    self.obstacle_positions.append(corners)
+        
 
         # initialize RVO2 simulator
         self.sim = rvo2.PyRVOSimulator(
@@ -97,6 +120,12 @@ class RVOFleetController(Node):
             self.robot_radius,
             self.max_speed
         )
+        
+        for obstacle_pos in self.obstacle_positions:
+            self.sim.addObstacle(obstacle_pos)
+            
+        self.sim.processObstacles()
+
 
         # robot states and agent lists
         self.robot_states: List[RobotState] = []

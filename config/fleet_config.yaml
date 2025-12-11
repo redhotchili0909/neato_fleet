@@ -14,15 +14,15 @@
     time_horizon_obst: 2.0
 
     start_positions: [0.0, 0.0, 0.9144, 0.0, 1.8288, 0.0]
-    obstacle_positions: [0.0, 1.0, 0.9144, 1.0, 1.8288, 1.0]
+    obstacle_positions: [0.0, 0.25, 1.5, 0.250, 3.0, 0.250]
 
 /fleet_goals:
   ros__parameters:
     num_robots: 3
     
-    scenario: "cross" 
+    scenario: "straight" 
 
     goals_swap: [1.8288, 0.0, 0.9144, 0.0, 0.0, 0.0]
     goals_straight: [0.0, 1.0, 0.9144, 1.0, 1.8288, 1.0]
-    goals_cross: [1.8288, 1.0, 0.9144, 2.0, 0.0, 1.0]
+    goals_cross: [1.8288, 3.0, 0.9144, 5.0, 0.0, 2.0]
     goals_home: [0.0, 0.0, 0.9144, 0.0, 1.8288, 0.0]
