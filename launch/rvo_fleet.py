@@ -70,7 +70,6 @@ def generate_launch_description():
         name='cmd_vel_recorder',
         output='screen',
         parameters=[{'num_robots': 3}]
-        
     )
     
     return LaunchDescription([
@@ -80,4 +79,5 @@ def generate_launch_description():
         multi_neato_launch,
         rvo_controller,
         fleet_goals,
+        recorder
     ])
