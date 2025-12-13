@@ -1,3 +1,6 @@
 [submodule "external/Python-RVO2"]
 	path = external/Python-RVO2
 	url = https://github.com/sybrenstuvel/Python-RVO2.git
+[submodule "website"]
+	path = website
+	url = git@github.com:akshat-creator/comp-robo-final-website.git
