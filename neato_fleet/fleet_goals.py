@@ -26,6 +26,7 @@ class FleetGoalPublisher(Node):
         self.declare_parameter('goals_cross', [0.0])
         self.declare_parameter('goals_straight', [0.0])
         self.declare_parameter('goals_home', [0.0])
+        self.declare_parameter('goals_pillar', [0.0])
 
         self.goal_pub = self.create_publisher(MarkerArray, '/fleet_goals', 10)
         self.create_timer(1.0, self.publish_goals)

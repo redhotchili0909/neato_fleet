@@ -9,6 +9,8 @@ Each Neato needs its own terminal. Make sure to use unique `robot_name`, `udp_vi
 ros2 launch neato_node2 bringup_multi.py host:=192.168.16.111 robot_name:=robot1 udp_video_port:=5002 udp_sensor_port:=7777 gscam_config:='udpsrc port=5002 ! application/x-rtp, payload=96 ! rtpjitterbuffer ! rtph264depay ! avdec_h264  ! videoconvert'
 ```
 
+ros2 bag record /robot1/accel /robot1/bump /robot1/odom /robot1/cmd_vel /robot1/tf /robot1/tf_static /robot2/accel /robot2/bump /robot2/odom /robot2/cmd_vel /robot2/tf /robot2/tf_static /robot3/accel /robot3/bump /robot3/odom /robot3/cmd_vel /robot3/tf /robot3/tf_static  -o WORKING.bag
+
 **Robot 2:**
 ```bash
 ros2 launch neato_node2 bringup_multi.py host:=192.168.16.126 robot_name:=robot2 udp_video_port:=5003 udp_sensor_port:=7778 gscam_config:='udpsrc port=5003 ! application/x-rtp, payload=96 ! rtpjitterbuffer ! rtph264depay ! avdec_h264  ! videoconvert'
@@ -121,3 +123,4 @@ ros2 run neato_fleet fleet_goals --ros-args -p scenario:=swap -p num_robots:=3
 ```
 ros2 run neato_fleet rvo_fleet_controller --ros-args     -p num_robots:=3     -p start_positions:="[0.0,0.0, 0.9144,0.0, 1.8288,0.0]"     -p start_yaws:="[1.5708, 1.5708, 1.5708]"
 ```
+

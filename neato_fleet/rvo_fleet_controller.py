@@ -91,7 +91,7 @@ class RVOFleetController(Node):
         obstacle_pos_flat = self.get_parameter('obstacle_positions').value
         self.obstacle_positions = []
         
-        obst_size = 0.3048
+        obst_size = 0.36576
         half_size = obst_size / 2.0
         
         if obstacle_pos_flat and len(obstacle_pos_flat) >= 2:
@@ -326,14 +326,14 @@ class RVOFleetController(Node):
             yaw_error = self.normalize_angle(desired_yaw - yaw)
             
             # if yaw error is large, reduce forward speed
-            if abs(yaw_error) > math.pi / 4:  # > 45 degrees
-                cmd.linear.x = 0.05
-                cmd.angular.z = 1.0 * yaw_error  # turn toward goal
-            else:
-                # move forward and correct heading
-                speed = math.sqrt(vx_global**2 + vy_global**2)
-                cmd.linear.x = speed
-                cmd.angular.z = 2.0 * yaw_error  # proportional error correction (if too reactive, adjust)
+            # if abs(yaw_error) > math.pi / 4:  # > 45 degrees
+            #     cmd.linear.x = 0.05
+            #     cmd.angular.z = 1.0 * yaw_error  # turn toward goal
+            # else:
+            # move forward and correct heading
+            speed = math.sqrt(vx_global**2 + vy_global**2)
+            cmd.linear.x = speed
+            cmd.angular.z = 2.0 * yaw_error  # proportional error correction (if too reactive, adjust)
         else:
             cmd.linear.x = 0.0
             cmd.angular.z = 0.0

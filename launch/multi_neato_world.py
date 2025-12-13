@@ -65,7 +65,7 @@ def launch_setup(context, *args, **kwargs):
                     '-x', str(pos_x),
                     '-y', str(pos_y),
                     '-z', '0.05',
-                    '-Y', str(math.pi / 2) # Facing North
+                    '-Y', str(0) # Facing North
                 ],
                 output='screen'
             )
@@ -92,7 +92,7 @@ def launch_setup(context, *args, **kwargs):
             )
         )
         
-    num_obstacles = 3
+    num_obstacles = 4
     obstacle_model_file = os.path.join(pkg, 'models', 'obstacles', 'cube.sdf')
     for i in range(num_obstacles):
             pos_x = obstacle_positions[i * 2]
