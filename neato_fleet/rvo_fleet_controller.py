@@ -91,7 +91,7 @@ class RVOFleetController(Node):
         obstacle_pos_flat = self.get_parameter('obstacle_positions').value
         self.obstacle_positions = []
         
-        obst_size = 0.36576
+        obst_size = 0.34576
         half_size = obst_size / 2.0
         
         if obstacle_pos_flat and len(obstacle_pos_flat) >= 2:
