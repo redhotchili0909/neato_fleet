@@ -1,7 +1,5 @@
 log
 .vscode
-
 resource/
 test/
-
 *.pyc
