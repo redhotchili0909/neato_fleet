@@ -23,8 +23,7 @@ from dataclasses import dataclass
 @dataclass
 class CommandFrame:
     timestamp: float
-    commands: List[Tuple[float, float]]  # [(linear_x, angular_z), ...]
-
+    commands: List[Tuple[float, float]]
 
 class CmdPlayer(Node):
     """Plays back recorded cmd_vel trajectories on real robots"""
@@ -42,7 +41,6 @@ class CmdPlayer(Node):
         if not trajectory_file:
             self.get_logger().error('No trajectory_file specified!')
         
-        # base_dir = os.path.expanduser('~/ros2_ws/src/comp-robo/neato_fleet/trajectories')
         base_dir = os.getcwd()
         self.trajectory_path = os.path.join(base_dir, 'trajectories', trajectory_file)
         

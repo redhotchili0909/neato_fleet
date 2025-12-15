@@ -2,3 +2,4 @@ log
 .vscode
 test/
 *.pyc
+.DS_Store

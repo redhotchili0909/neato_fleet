@@ -39,10 +39,6 @@ class CmdRecorder(Node):
         
         self.num_robots = self.get_parameter('num_robots').value
         
-        # self.output_dir = os.path.expanduser(
-        #     '~/ros2_ws/src/comp-robo/neato_fleet/trajectories'
-        # )
-        
         self.output_dir = os.getcwd()
 
         os.makedirs(self.output_dir, exist_ok=True)
