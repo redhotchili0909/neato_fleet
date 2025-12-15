@@ -4,3 +4,4 @@
 [submodule "website"]
 	path = website
 	url = git@github.com:akshat-creator/comp-robo-final-website.git
+	branch = main
