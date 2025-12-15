@@ -8,6 +8,20 @@ A ROS2 system for coordinating multiple Neato robots using Reciprocal Velocity O
 
 **For a detailed project report, methodology, and results, visit our [project website](https://neato-fleet.netlify.app/).**
 
+## How RVO2 Works
+
+The Reciprocal Velocity Obstacles (RVO2) algorithm computes collision-free velocities for multiple agents in real-time. Here's the basic pipeline:
+
+1. **Preferred Velocity**: Each robot computes a velocity vector pointing toward its goal at max speed
+2. **Velocity Obstacles**: For each nearby robot/obstacle, RVO2 constructs a "forbidden zone" in velocity space—velocities that would cause collision within the time horizon
+3. **Reciprocal Sharing**: Each robot takes responsibility for half the avoidance effort, preventing oscillations
+4. **Safe Velocity**: RVO2 finds the velocity closest to preferred that avoids all forbidden zones
+5. **Twist Conversion**: The global velocity is converted to robot-frame linear/angular commands
+
+The key insight is **reciprocity**—if all robots follow RVO2, collisions are provably avoided without explicit communication. The algorithm runs efficiently (linear in number of agents) making it suitable for real-time control.
+
+For more details, see [van den Berg et al., "Reciprocal n-body Collision Avoidance"](https://gamma.cs.unc.edu/RVO2/).
+
 ## Quick Start
 
 ### Prerequisites
@@ -171,6 +185,22 @@ You can scale up to any number of robots by updating `num_robots` and providing 
 ```
 
 The controller will automatically handle any number of robots, just ensure your lists have `2 * num_robots` values (x, y pairs).
+
+### Adding Static Obstacles
+
+RVO2 also handles static obstacle avoidance. Add obstacles by specifying their center positions in the config:
+
+```yaml
+/rvo_fleet_controller:
+  ros__parameters:
+    # Obstacle center positions [x1,y1, x2,y2, ...]
+    obstacle_positions: [1.5, 3.3, 2.7, 2.6, 1.7, 1.8, 2.6, 1.0]
+    time_horizon_obst: 3.0  # How far ahead to plan for obstacles (seconds)
+```
+
+Each obstacle is modeled as a square polygon. The `time_horizon_obst` parameter controls how early robots begin avoiding obstacles (separate from robot-robot avoidance which uses `time_horizon`).
+
+**Note:** When adding obstacles in simulation, you'll also need to add corresponding obstacle models in the Gazebo world file (`models/worlds/`) to match your YAML configuration.
 
 ## What Each Script Does
 
