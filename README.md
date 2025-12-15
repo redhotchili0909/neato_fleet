@@ -189,6 +189,21 @@ Replays recorded CSV trajectories on real robots, bypassing odometry feedback (u
 ### `simulator_adapter.py`
 Bridges Gazebo simulation and real hardware by standardizing odometry formats and velocity command handling.
 
+## Included Demo Files
+
+### ROS2 Bag Recording (`bag/`)
+Contains a ROS2 bag recording of our "pillar" scenario demo running on three physical Neato robots. This recording captures odometry, velocity commands, and transforms from a successful run where robots navigate around static obstacles while avoiding each other and moving toward their goals. The corresponding video demo is available on the [project website](https://neato-fleet.netlify.app/).
+
+### Trajectory Recordings (`trajectories/`)
+Pre-recorded `cmd_vel` trajectories for playback on real hardware:
+- **`obstacles_demo.csv`** — Recording of the "pillar" scenario with 3 robots navigating around obstacles
+- **`swap_demo.csv`** — Recording of a simple position swap scenario for basic testing
+
+Use these with `cmd_player.py` to replay the demos:
+```bash
+ros2 run neato_fleet cmd_player --ros-args -p trajectory_file:=trajectories/obstacles_demo.csv
+```
+
 ## Setup Notes
 
 ### For Simulation
