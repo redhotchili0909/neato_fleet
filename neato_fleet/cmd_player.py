@@ -107,7 +107,7 @@ class CmdPlayer(Node):
         self.start_time = self.get_clock().now().nanoseconds / 1e9
         self.current_frame = 0
         self.last_log_time = 0.0
-        self.get_logger().info('▶PLAYBACK STARTED')
+        self.get_logger().info('PLAYBACK STARTED')
 
     def playback_tick(self):
         """Main playback loop"""
@@ -161,6 +161,7 @@ class CmdPlayer(Node):
         for pub in self.vel_pubs:
             pub.publish(stop_cmd)
         
+        self.get_logger().info('PLAYBACK COMPLETE')
         self.create_timer(1.0, lambda: rclpy.shutdown())
 
     def destroy_node(self):
